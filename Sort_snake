@@ -1,0 +1,231 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+/*
+    1 6 7
+    2 5 8
+    3 4 9
+*/
+void sort_vertical(int **matrix, int n, int m, int **result_matrix);
+
+/*
+    1 2 3
+    6 5 4
+    7 8 9
+*/
+void sort_horizontal(int **matrix, int n, int m, int **result_matrix);
+
+/*
+    7 8 9
+    6 1 2
+    5 4 3
+*/
+void sort_spiral(int **matrix, int n, int m, int **result_matrix);
+
+void input(int ***matrix, int ***result, int *n, int *m);
+void output(int **matrix, int n, int m);
+void sort_buffer(int **matrix, int *buffer, int n, int m);
+void allocate(int ***matrix, int n, int m);
+void clearup(int ***matrix, int ***result);
+
+int main() {
+  int **matrix = NULL;
+  int **result = NULL;
+  int n, m;
+
+  input(&matrix, &result, &n, &m);
+
+  sort_vertical(matrix, n, m, result);
+  output(result, n, m);
+
+  sort_horizontal(matrix, n, m, result);
+  output(result, n, m);
+
+  sort_spiral(matrix, n, m, result);
+  output(result, n, m);
+
+  clearup(&matrix, &result);
+
+  return 0;
+}
+
+void input(int ***matrix, int ***result, int *n, int *m) {
+  if (scanf("%d %d", m, n) == 2 && ungetc(getc(stdin), stdin) == '\n') {
+    allocate(matrix, *n, *m);
+    allocate(result, *n, *m);
+    int **matrix_ = (int **)*matrix;
+    for (int i = 0; i < *m; i++) {  //
+      // printf("new\n");
+      for (int j = 0; j < *n; j++) {
+        // printf("Here!\n");
+        // printf("%d\n", i);
+        // printf("%p\n", &(b[1][0]));
+        if (!scanf("%d", &(matrix_[j][i]))) {
+          *m = -1;
+          break;
+        }
+        // printf("%d", *(*(*buffer + j) + i));
+        if (j + 1 < *n) {
+          char trash = getc(stdin);
+          while ((int)trash < 33) {
+            if (trash == '\n') {
+              *m = -1;
+              break;
+            }
+            trash = getc(stdin);
+          }
+          if (trash == '\n') break;
+
+          ungetc(trash, stdin);
+        } else if (getc(stdin) != '\n') {
+          *m = -1;
+          break;
+        }
+      }
+      if (*m < 0) break;
+    }
+
+    // printf("no\n");
+  } else {
+    *m = -1;
+  }
+  // printf("yes\n");
+}
+
+void allocate(int ***matrix, int n, int m) {
+  *matrix = (int **)malloc(sizeof(int *) * n + sizeof(int) * n * m);
+  int *ptrs = (int *)(*matrix + n);
+  for (int k = 0; k < n; k++) {
+    *(*matrix + k) = ptrs + m * k;
+  }
+}
+
+void output(int **matrix, int n, int m) {
+  if (m > 0) {
+    // int *b = (int *)matrix;
+    // printf("i'm here!\n");
+    printf("\n");
+    for (int i = 0; i < m; i++) {
+      for (int j = 0; j < n; j++) {
+        printf("%d", matrix[j][i]);
+        if (j + 1 < n) printf(" ");
+      }
+      printf("\n");
+    }
+  } else {
+    printf("n/a");
+  }
+}
+
+void sort_vertical(int **matrix, int n, int m, int **result_matrix) {
+  int *buffer = (int *)malloc(sizeof(int) * m * n);
+  sort_buffer(matrix, buffer, n, m);
+
+  int dir = 1;
+  int y = 0;
+  int position = 0;
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < m; j++) {
+      result_matrix[i][y] = buffer[position];
+      // printf("%d %d, %d %d\n", i, y, buffer[position], position);
+      y += dir;
+      position++;
+    }
+    dir *= -1;
+    y += dir;
+  }
+  free(buffer);
+}
+
+void sort_horizontal(int **matrix, int n, int m, int **result_matrix) {
+  int *buffer = (int *)malloc(sizeof(int) * m * n);
+  sort_buffer(matrix, buffer, n, m);
+
+  int dir = 1;
+  int x = 0;
+  int position = 0;
+  for (int i = 0; i < m; i++) {
+    for (int j = 0; j < n; j++) {
+      result_matrix[x][i] = buffer[position];
+      // printf("%d %d, %d\n", i, y, buffer[position]);
+      x += dir;
+      position++;
+    }
+    dir *= -1;
+    x += dir;
+  }
+  free(buffer);
+}
+
+void sort_spiral(int **matrix, int n, int m, int **result_matrix) {
+  int *buffer = (int *)malloc(sizeof(int) * m * n);
+  sort_buffer(matrix, buffer, n, m);
+  // printf("YO\n");
+  int counter = 1;
+  int dirHorizontal = 1;
+  int dirVertical = 1;
+  int dir = 1;
+  int x = (n - 1) / 2;
+  int y = (m - 1) / 2;
+  // printf("%d %d\n", x, y);
+  int position = 0;
+  result_matrix[x][y] = buffer[position];
+  position++;
+
+  for (int i = 0; i < 2; i++) {
+    for (int step = 0; step < counter; step++) {
+      if (position == n * m) break;
+      if (dir) {
+        x += dirHorizontal;
+        // printf("%d %d\n", x, y);
+      } else {
+        y += dirVertical;
+        // printf("%d %d\n", x, y);
+      }
+      if (x < n && x >= 0 && y < m && y >= 0) {
+        // printf("%d\n", buffer[position]);
+        result_matrix[x][y] = buffer[position];
+        position++;
+      }
+      // getc(stdin);
+    }
+    if (dir) {
+      dirHorizontal *= -1;
+    } else {
+      dirVertical *= -1;
+    }
+    dir = !dir;
+    if (i == 1) {
+      i = -1;
+      // printf("%d\n", position);
+      counter++;
+    }
+    if (position == n * m) break;
+  }
+
+  free(buffer);
+}
+
+void sort_buffer(int **matrix, int *buffer, int n, int m) {
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < m; j++) {
+      buffer[i * m + j] = matrix[i][j];
+      // printf("%d %d %d\n", i * m + j, buffer[i * n + j], matrix[i][j]);
+    }
+  }
+  for (int i = 0; i < n * m; i++) {
+    for (int j = i; j < n * m; j++) {
+      if (buffer[i] > buffer[j]) {
+        int tmp = buffer[i];
+        buffer[i] = buffer[j];
+        buffer[j] = tmp;
+      }
+    }
+  }
+}
+
+void clearup(int ***matrix, int ***result) {
+  // printf("fyuseb");
+  free(*matrix);
+  free(*result);
+}
